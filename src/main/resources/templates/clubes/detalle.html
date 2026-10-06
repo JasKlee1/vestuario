@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos/plantilla :: head(${club.nombre})}"></head>
+<body>
+<div class="app">
+    <div th:replace="~{fragmentos/plantilla :: lateral('clubes')}"></div>
+    <div class="app-principal">
+        <header th:replace="~{fragmentos/plantilla :: barraMovil}"></header>
+        <main class="app-contenido">
+            <a th:href="@{/clubes}" class="volver"><i class="bi bi-arrow-left" aria-hidden="true"></i> Clubes</a>
+            <div th:replace="~{fragmentos/plantilla :: avisos}"></div>
+ 
+            <!-- Cabecera del club -->
+            <div class="ficha">
+                <span class="escudo escudo-grande" aria-hidden="true" th:text="${club.iniciales}">MI</span>
+                <div class="ficha-texto">
+                    <h1 th:text="${club.nombre}">Millonarios</h1>
+                    <p class="encabezado-texto">
+                        <span th:text="${club.pais}">Colombia</span>, fundado en
+                        <span th:text="${club.anioFundacion}">1946</span>
+                    </p>
+                </div>
+                <a th:href="@{/clubes/{id}/editar(id=${club.id})}" class="btn btn-suave">
+                    <i class="bi bi-pencil" aria-hidden="true"></i> Editar club</a>
+            </div>
+ 
+            <div class="row g-4">
+                <!-- Plantilla (relación 1:N) -->
+                <div class="col-xl-8">
+                    <section class="panel">
+                        <div class="panel-cabecera">
+                            <h2 class="panel-titulo">Plantilla</h2>
+                            <span class="contador" th:text="${club.totalJugadores} + ' de 26 jugadores'">5 de 26 jugadores</span>
+                        </div>
+ 
+                        <form class="alta-jugador" th:object="${jugador}"
+                              th:action="@{/clubes/{id}/jugadores(id=${club.id})}" method="post" novalidate>
+                            <div th:if="${#fields.hasGlobalErrors()}" class="text-danger small mb-2" th:errors="*{global}"></div>
+                            <div class="row g-2 align-items-start">
+                                <div class="col-3 col-md-2">
+                                    <label for="numero" class="form-label">Dorsal</label>
+                                    <input type="number" th:field="*{numero}" class="form-control dorsal-input"
+                                           th:errorclass="is-invalid" min="1" max="99">
+                                    <div class="invalid-feedback" th:errors="*{numero}"></div>
+                                </div>
+                                <div class="col-9 col-md-3">
+                                    <label for="nombre" class="form-label">Nombre</label>
+                                    <input type="text" th:field="*{nombre}" class="form-control" th:errorclass="is-invalid" maxlength="40">
+                                    <div class="invalid-feedback" th:errors="*{nombre}"></div>
+                                </div>
+                                <div class="col-6 col-md-3">
+                                    <label for="apellido" class="form-label">Apellido</label>
+                                    <input type="text" th:field="*{apellido}" class="form-control" th:errorclass="is-invalid" maxlength="40">
+                                    <div class="invalid-feedback" th:errors="*{apellido}"></div>
+                                </div>
+                                <div class="col-6 col-md-2">
+                                    <label for="posicion" class="form-label">Posición</label>
+                                    <select th:field="*{posicion}" class="form-select" th:errorclass="is-invalid">
+                                        <option value="">Elegir</option>
+                                        <option th:each="p : ${posiciones}" th:value="${p}" th:text="${p.etiqueta}">Portero</option>
+                                    </select>
+                                    <div class="invalid-feedback" th:errors="*{posicion}"></div>
+                                </div>
+                                <div class="col-12 col-md-2 d-grid">
+                                    <span class="form-label d-none d-md-block" aria-hidden="true">&nbsp;</span>
+                                    <button type="submit" class="btn btn-pino"
+                                            th:disabled="${club.totalJugadores >= 26}">Agregar</button>
+                                </div>
+                            </div>
+                        </form>
+ 
+                        <p th:if="${#lists.isEmpty(club.jugadores)}" class="nota mb-0">
+                            Aún no hay jugadores. Agrega el primero con el formulario de arriba.</p>
+ 
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(club.jugadores)}">
+                            <table class="table tabla align-middle mb-0">
+                                <thead>
+                                <tr>
+                                    <th scope="col">Dorsal</th>
+                                    <th scope="col">Jugador</th>
+                                    <th scope="col">Posición</th>
+                                    <th scope="col" class="text-end"><span class="visually-hidden">Acciones</span></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr th:each="j : ${club.jugadores}">
+                                    <td><span class="dorsal" th:text="${j.numero}">10</span></td>
+                                    <td th:text="${j.nombre + ' ' + j.apellido}">Santiago Rincón</td>
+                                    <td><span class="posicion" th:classappend="'posicion-' + ${#strings.toLowerCase(j.posicion)}"
+                                              th:text="${j.posicion.etiqueta}">Mediocampista</span></td>
+                                    <td class="text-end">
+                                        <form th:action="@{/clubes/{id}/jugadores/{j}/eliminar(id=${club.id},j=${j.id})}" method="post"
+                                              onsubmit="return confirm('¿Retirar este jugador de la plantilla?');">
+                                            <button type="submit" class="btn btn-sm btn-icono btn-icono-peligro"
+                                                    th:attr="aria-label='Retirar a ' + ${j.nombre} + ' ' + ${j.apellido}">
+                                                <i class="bi bi-person-dash" aria-hidden="true"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+ 
+                <!-- Columna lateral: 1:1, N:1 y N:N -->
+                <div class="col-xl-4 vstack gap-4">
+                    <section class="panel">
+                        <h2 class="panel-titulo">Entrenador</h2>
+                        <p class="dato-principal" th:text="${club.entrenador.nombreCompleto}">Andrés Rojas</p>
+                        <dl class="datos">
+                            <div><dt>Edad</dt><dd th:text="${club.entrenador.edad} + ' años'">48 años</dd></div>
+                            <div><dt>Nacionalidad</dt><dd th:text="${club.entrenador.nacionalidad}">Colombiana</dd></div>
+                        </dl>
+                    </section>
+ 
+                    <section class="panel">
+                        <h2 class="panel-titulo">Asociación</h2>
+                        <th:block th:if="${club.asociacion != null}">
+                            <p class="dato-principal">
+                                <span class="sigla" th:text="${club.asociacion.siglas}">FCF</span>
+                                <span th:text="${club.asociacion.nombre}">Federación Colombiana de Fútbol</span>
+                            </p>
+                            <dl class="datos">
+                                <div><dt>País</dt><dd th:text="${club.asociacion.pais}">Colombia</dd></div>
+                                <div th:if="${club.asociacion.presidente != null}"><dt>Presidente</dt>
+                                    <dd th:text="${club.asociacion.presidente}">Nombre</dd></div>
+                            </dl>
+                        </th:block>
+                    </section>
+ 
+                    <section class="panel">
+                        <h2 class="panel-titulo">Competiciones</h2>
+                        <p th:if="${#lists.isEmpty(club.competiciones)}" class="nota mb-0">No está inscrito en ninguna competición.</p>
+                        <ul class="lista-simple" th:unless="${#lists.isEmpty(club.competiciones)}">
+                            <li th:each="c : ${club.competiciones}">
+                                <strong th:text="${c.nombre}">Copa</strong>
+                                <small th:text="${#temporals.format(c.fechaInicio, 'dd/MM/yyyy')} + ' al ' + ${#temporals.format(c.fechaFin, 'dd/MM/yyyy')}">fechas</small>
+                            </li>
+                        </ul>
+                    </section>
+ 
+                    <section class="panel panel-peligro">
+                        <h2 class="panel-titulo">Eliminar club</h2>
+                        <p class="nota">Se eliminan también el entrenador y toda la plantilla. La asociación y las competiciones se conservan.</p>
+                        <form th:action="@{/clubes/{id}/eliminar(id=${club.id})}" method="post"
+                              onsubmit="return confirm('¿Eliminar este club con su entrenador y su plantilla? No se puede deshacer.');">
+                            <button type="submit" class="btn btn-peligro">Eliminar club</button>
+                        </form>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragmentos/plantilla :: scripts}"></th:block>
+</body>
+</html>

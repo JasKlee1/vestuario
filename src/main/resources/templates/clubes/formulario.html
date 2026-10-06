@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos/plantilla :: head(${club.id == null ? 'Nuevo club' : 'Editar club'})}"></head>
+<body>
+<div class="app">
+    <div th:replace="~{fragmentos/plantilla :: lateral('clubes')}"></div>
+    <div class="app-principal">
+        <header th:replace="~{fragmentos/plantilla :: barraMovil}"></header>
+        <main class="app-contenido contenido-angosto">
+            <a th:href="${club.id == null} ? @{/clubes} : @{/clubes/{id}(id=${club.id})}" class="volver">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i> Volver</a>
+ 
+            <div class="encabezado">
+                <div>
+                    <h1 th:text="${club.id == null} ? 'Nuevo club' : 'Editar club'">Nuevo club</h1>
+                    <p class="encabezado-texto" th:text="${club.id == null ? 'Registra el club con su entrenador. La plantilla se agrega después desde la ficha del club.' : 'Actualiza los datos del club, su entrenador y su afiliación.'}">Texto</p>
+                </div>
+            </div>
+ 
+            <form th:object="${club}" method="post" novalidate
+                  th:action="${club.id == null} ? @{/clubes} : @{/clubes/{id}(id=${club.id})}">
+ 
+                <div th:if="${#fields.hasErrors('*')}" class="alert aviso aviso-error" role="alert">
+                    <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
+                    <span>Revisa los campos marcados en rojo.</span>
+                </div>
+                <div th:if="${#fields.hasGlobalErrors()}" class="text-danger small mb-3" th:errors="*{global}"></div>
+ 
+                <!-- Datos del club -->
+                <section class="panel">
+                    <h2 class="panel-titulo">Datos del club</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" th:field="*{nombre}" class="form-control" th:errorclass="is-invalid"
+                                   maxlength="60" placeholder="Ej. Independiente Santa Fe">
+                            <div class="invalid-feedback" th:errors="*{nombre}"></div>
+                        </div>
+                        <div class="col-7 col-md-3">
+                            <label for="pais" class="form-label">País</label>
+                            <input type="text" th:field="*{pais}" class="form-control" th:errorclass="is-invalid" maxlength="40">
+                            <div class="invalid-feedback" th:errors="*{pais}"></div>
+                        </div>
+                        <div class="col-5 col-md-3">
+                            <label for="anioFundacion" class="form-label">Fundación</label>
+                            <input type="number" th:field="*{anioFundacion}" class="form-control" th:errorclass="is-invalid"
+                                   min="1850" placeholder="Año">
+                            <div class="invalid-feedback" th:errors="*{anioFundacion}"></div>
+                        </div>
+                    </div>
+                </section>
+ 
+                <!-- Entrenador: relación 1:1, se guarda en cascada -->
+                <section class="panel">
+                    <h2 class="panel-titulo">Entrenador</h2>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="entrenador.nombre" class="form-label">Nombre</label>
+                            <input type="text" th:field="*{entrenador.nombre}" class="form-control" th:errorclass="is-invalid" maxlength="40">
+                            <div class="invalid-feedback" th:errors="*{entrenador.nombre}"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="entrenador.apellido" class="form-label">Apellido</label>
+                            <input type="text" th:field="*{entrenador.apellido}" class="form-control" th:errorclass="is-invalid" maxlength="40">
+                            <div class="invalid-feedback" th:errors="*{entrenador.apellido}"></div>
+                        </div>
+                        <div class="col-4 col-md-3">
+                            <label for="entrenador.edad" class="form-label">Edad</label>
+                            <input type="number" th:field="*{entrenador.edad}" class="form-control" th:errorclass="is-invalid" min="18" max="90">
+                            <div class="invalid-feedback" th:errors="*{entrenador.edad}"></div>
+                        </div>
+                        <div class="col-8 col-md-9">
+                            <label for="entrenador.nacionalidad" class="form-label">Nacionalidad</label>
+                            <input type="text" th:field="*{entrenador.nacionalidad}" class="form-control" th:errorclass="is-invalid" maxlength="40">
+                            <div class="invalid-feedback" th:errors="*{entrenador.nacionalidad}"></div>
+                        </div>
+                    </div>
+                </section>
+ 
+                <!-- Afiliación: N:1 con asociación y N:N con competiciones -->
+                <section class="panel">
+                    <h2 class="panel-titulo">Afiliación</h2>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label for="asociacionId" class="form-label">Asociación</label>
+                            <select id="asociacionId" name="asociacionId" class="form-select"
+                                    th:classappend="${#fields.hasErrors('asociacion')} ? 'is-invalid'">
+                                <option value="">Selecciona una asociación</option>
+                                <option th:each="a : ${asociaciones}" th:value="${a.id}"
+                                        th:text="${a.nombre + ' (' + a.siglas + ')'}"
+                                        th:selected="${a.id == asociacionId}">FCF</option>
+                            </select>
+                            <div class="invalid-feedback" th:errors="*{asociacion}"></div>
+                        </div>
+                        <div class="col-12">
+                            <span class="form-label d-block">Competiciones</span>
+                            <p th:if="${#lists.isEmpty(competiciones)}" class="nota mb-0">
+                                No hay competiciones registradas. Puedes crearlas en la sección Competiciones.</p>
+                            <div class="d-flex flex-wrap gap-2">
+                                <th:block th:each="c : ${competiciones}">
+                                    <input type="checkbox" class="btn-check" name="competicionIds"
+                                           th:id="'comp-' + ${c.id}" th:value="${c.id}"
+                                           th:checked="${#lists.contains(competicionIds, c.id)}" autocomplete="off">
+                                    <label class="btn btn-opcion" th:for="'comp-' + ${c.id}" th:text="${c.nombre}">Copa</label>
+                                </th:block>
+                            </div>
+                            <div class="text-danger small mt-2" th:if="${#fields.hasErrors('competiciones')}" th:errors="*{competiciones}"></div>
+                        </div>
+                    </div>
+                </section>
+ 
+                <div class="acciones-formulario">
+                    <button type="submit" class="btn btn-pino btn-lg">Guardar club</button>
+                    <a th:href="${club.id == null} ? @{/clubes} : @{/clubes/{id}(id=${club.id})}" class="enlace">Cancelar</a>
+                </div>
+            </form>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragmentos/plantilla :: scripts}"></th:block>
+</body>
+</html>

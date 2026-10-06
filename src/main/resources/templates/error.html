@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos/plantilla :: head('Error')}"></head>
+<body>
+<div class="app">
+    <div th:replace="~{fragmentos/plantilla :: lateral('')}"></div>
+    <div class="app-principal">
+        <header th:replace="~{fragmentos/plantilla :: barraMovil}"></header>
+        <main class="app-contenido contenido-angosto">
+            <section class="panel vacio">
+                <i class="bi bi-signpost-split" aria-hidden="true"></i>
+                <h1 th:text="${status == 404} ? 'No encontramos esa página' : 'Algo salió mal'">Algo salió mal</h1>
+                <p th:text="${message != null and !#strings.isEmpty(message)} ? ${message} : 'Vuelve al listado de clubes e inténtalo de nuevo.'">Mensaje</p>
+                <a th:href="@{/clubes}" class="btn btn-pino">Ir a clubes</a>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragmentos/plantilla :: scripts}"></th:block>
+</body>
+</html>

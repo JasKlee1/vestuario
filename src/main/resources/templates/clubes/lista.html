@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos/plantilla :: head('Clubes')}"></head>
+<body>
+<div class="app">
+    <div th:replace="~{fragmentos/plantilla :: lateral('clubes')}"></div>
+    <div class="app-principal">
+        <header th:replace="~{fragmentos/plantilla :: barraMovil}"></header>
+        <main class="app-contenido">
+            <div th:replace="~{fragmentos/plantilla :: avisos}"></div>
+ 
+            <div class="encabezado">
+                <div>
+                    <h1>Clubes</h1>
+                    <p class="encabezado-texto">Plantillas, entrenadores y afiliaciones de cada club registrado.</p>
+                </div>
+                <a th:href="@{/clubes/nuevo}" class="btn btn-pino">
+                    <i class="bi bi-plus-lg" aria-hidden="true"></i> Nuevo club</a>
+            </div>
+ 
+            <!-- Resumen general -->
+            <section class="resumen" aria-label="Resumen">
+                <div class="resumen-dato">
+                    <i class="bi bi-shield-fill" aria-hidden="true"></i>
+                    <span><strong th:text="${totalClubes}">0</strong> clubes</span>
+                </div>
+                <div class="resumen-dato">
+                    <i class="bi bi-person-arms-up" aria-hidden="true"></i>
+                    <span><strong th:text="${totalJugadores}">0</strong> jugadores</span>
+                </div>
+                <a class="resumen-dato" th:href="@{/asociaciones}">
+                    <i class="bi bi-bank2" aria-hidden="true"></i>
+                    <span><strong th:text="${totalAsociaciones}">0</strong> asociaciones</span>
+                </a>
+                <a class="resumen-dato" th:href="@{/competiciones}">
+                    <i class="bi bi-trophy-fill" aria-hidden="true"></i>
+                    <span><strong th:text="${totalCompeticiones}">0</strong> competiciones</span>
+                </a>
+            </section>
+ 
+            <section class="panel">
+                <div class="panel-barra">
+                    <form class="buscador" th:action="@{/clubes}" method="get" role="search">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        <input type="search" name="q" th:value="${q}" class="form-control"
+                               placeholder="Buscar club por nombre" aria-label="Buscar club por nombre">
+                    </form>
+                    <a th:unless="${#strings.isEmpty(q)}" th:href="@{/clubes}" class="enlace">Quitar filtro</a>
+                </div>
+ 
+                <!-- Sin resultados -->
+                <div th:if="${#lists.isEmpty(clubes)}" class="vacio">
+                    <i class="bi bi-shield-plus" aria-hidden="true"></i>
+                    <th:block th:if="${#strings.isEmpty(q)}">
+                        <h2>Todavía no hay clubes</h2>
+                        <p>Registra el primero con su entrenador y su asociación.</p>
+                        <a th:href="@{/clubes/nuevo}" class="btn btn-pino">Nuevo club</a>
+                    </th:block>
+                    <th:block th:unless="${#strings.isEmpty(q)}">
+                        <h2>Ningún club coincide con la búsqueda</h2>
+                        <p>Revisa el nombre o prueba con menos letras.</p>
+                    </th:block>
+                </div>
+ 
+                <!-- Tabla de clubes -->
+                <div class="table-responsive" th:unless="${#lists.isEmpty(clubes)}">
+                    <table class="table tabla align-middle mb-0">
+                        <thead>
+                        <tr>
+                            <th scope="col">Club</th>
+                            <th scope="col">Asociación</th>
+                            <th scope="col" class="d-none d-md-table-cell">Entrenador</th>
+                            <th scope="col" class="text-center">Jugadores</th>
+                            <th scope="col" class="text-end"><span class="visually-hidden">Acciones</span></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="club : ${clubes}">
+                            <td>
+                                <a class="club-celda" th:href="@{/clubes/{id}(id=${club.id})}">
+                                    <span class="escudo" aria-hidden="true" th:text="${club.iniciales}">MI</span>
+                                    <span>
+                                        <strong th:text="${club.nombre}">Millonarios</strong>
+                                        <small th:text="${club.pais} + ', desde ' + ${club.anioFundacion}">Colombia, desde 1946</small>
+                                    </span>
+                                </a>
+                            </td>
+                            <td><span class="sigla" th:text="${club.asociacion?.siglas}" th:title="${club.asociacion?.nombre}">FCF</span></td>
+                            <td class="d-none d-md-table-cell" th:text="${club.entrenador?.nombreCompleto}">Andrés Rojas</td>
+                            <td class="text-center"><span class="conteo" th:text="${club.totalJugadores}">5</span></td>
+                            <td class="text-end text-nowrap">
+                                <a class="btn btn-sm btn-suave" th:href="@{/clubes/{id}(id=${club.id})}">Ver ficha</a>
+                                <a class="btn btn-sm btn-icono" th:href="@{/clubes/{id}/editar(id=${club.id})}"
+                                   th:attr="aria-label='Editar ' + ${club.nombre}"><i class="bi bi-pencil" aria-hidden="true"></i></a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragmentos/plantilla :: scripts}"></th:block>
+</body>
+</html>
